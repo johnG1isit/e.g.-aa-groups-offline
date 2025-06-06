@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Grupos AA Offline</title>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" sizes="192x192" href="AAlg.png">
+  <link rel="icon" sizes="512x512" href="AAlg.png">
+  <meta name="theme-color" content="#1976d2">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 0;
+      margin: 0;
+      background: #f9f9f9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: #fff;
+      max-width: 400px;
+      width: 100%;
+      margin: 40px auto;
+      padding: 24px 18px 18px 18px;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 4px rgba(0,0,0,0.08);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .logo-aa {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+    .logo-aa img {
+      width: 80px;
+      height: auto;
+      display: block;
+    }
+    .group {
+      border-bottom: 1px solid #ccc;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+    }
+    input, textarea {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 8px 12px;
+      margin-top: 5px;
+      font-size: 1em;
+      border-radius: 5px;
+      border: none;
+      background: #1976d2;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #125ea2;
+    }
+    #groupList ul {
+      list-style: disc;
+      margin-left: 20px;
+    }
+    #groupList li {
+      margin-bottom: 6px;
+    }
+    .nav-btns, .sync-btns {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .nav-btns button, .sync-btns button {
+      margin: 0 4px 8px 4px;
+    }
+    .hidden {
+      display: none;
+    }
+    .sync-btns span {
+      display: block;
+      margin-top: 6px;
+      color: #555;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-aa">
+      <img src="AAlg.png" alt="AA Logo">
+    </div>
+    <h1>Directorio de Grupos AA</h1>
+    <div class="nav-btns">
+      <button id="showFormBtn">Agregar Grupo</button>
+      <button id="showListBtn">Ver Lista</button>
+    </div>
+    <div class="sync-btns">
+      <button id="exportBtn">Exportar Grupos</button>
+      <input type="file" id="importInput" style="display:none;" accept=".json">
+      <button id="importBtn">Importar Grupos</button>
+      <span>(Comparte archivos por Bluetooth, AirDrop, correo, etc.)</span>
+    </div>
+
+    <div id="formSection">
+      <h2 id="formTitle">Agregar Nuevo Grupo</h2>
+      <form id="groupForm">
+        <input type="text" id="name" placeholder="Nombre del Grupo" required><br>
+        <input type="text" id="address" placeholder="Dirección" required><br>
+        <input type="text" id="phone" placeholder="Teléfono" required><br>
+        <input type="date" id="start_date" required><br>
+        <input type="text" id="hours" placeholder="Horario de Atención" required><br>
+        <button type="submit">Agregar Grupo</button>
+        <button type="button" id="cancelEdit" style="display:none; margin-left:10px;">Cancelar Edición</button>
+      </form>
+      <div id="groups"></div>
+    </div>
+
+    <div id="listSection" class="hidden">
+      <h2>Lista de Grupos</h2>
+      <div id="groupList"></div>
+    </div>
+  </div>
+  <script>
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+    let groups = JSON.parse(localStorage.getItem('aa_groups') || '[]');
+    let editIndex = null;
+
+    // Navegación
+    const formSection = document.getElementById('formSection');
+    const listSection = document.getElementById('listSection');
+    document.getElementById('showFormBtn').onclick = function() {
+      formSection.classList.remove('hidden');
+      listSection.classList.add('hidden');
+    };
+    document.getElementById('showListBtn').onclick = function() {
+      formSection.classList.add('hidden');
+      listSection.classList.remove('hidden');
+      renderGroupList();
+    };
+
+    function renderGroups() {
+      const container = document.getElementById('groups');
+      container.innerHTML = '';
+      groups.forEach((g, i) => {
+        container.innerHTML += `
+          <div class="group">
+            <strong>${g.name}</strong><br>
+            📍 ${g.address}<br>
+            📞 ${g.phone}<br>
+            🗓️ Desde: ${g.start_date}<br>
+            ⏰ Horario: ${g.hours}<br>
+            <button onclick="deleteGroup(${i})">🗑️ Eliminar</button>
+            <button onclick="editGroup(${i})">✏️ Editar</button>
+          </div>`;
+      });
+    }
+
+    function renderGroupList() {
+      const listContainer = document.getElementById('groupList');
+      if (!groups.length) {
+        listContainer.innerHTML = '<em>No hay grupos agregados aún.</em>';
+        return;
+      }
+      listContainer.innerHTML = '<ul>' + groups.map(g =>
+        `<li><strong>${g.name}</strong> - ${g.address} - ${g.phone} - ${g.start_date} - ${g.hours}</li>`
+      ).join('') + '</ul>';
+    }
+
+    function deleteGroup(index) {
+      if (confirm("¿Eliminar este grupo?")) {
+        groups.splice(index, 1);
+        localStorage.setItem('aa_groups', JSON.stringify(groups));
+        renderGroups();
+        renderGroupList();
+        resetForm();
+      }
+    }
+
+    window.deleteGroup = deleteGroup;
+
+    function editGroup(index) {
+      const g = groups[index];
+      document.getElementById('name').value = g.name;
+      document.getElementById('address').value = g.address;
+      document.getElementById('phone').value = g.phone;
+      document.getElementById('start_date').value = g.start_date;
+      document.getElementById('hours').value = g.hours;
+      editIndex = index;
+      document.getElementById('formTitle').innerText = 'Editar Grupo';
+      document.querySelector('#groupForm button[type=\"submit\"]').innerText = 'Guardar Cambios';
+      document.getElementById('cancelEdit').style.display = 'inline-block';
+      // Siempre mostrar el formulario al editar
+      formSection.classList.remove('hidden');
+      listSection.classList.add('hidden');
+    }
+
+    window.editGroup = editGroup;
+
+    function resetForm() {
+      document.getElementById('groupForm').reset();
+      editIndex = null;
+      document.getElementById('formTitle').innerText = 'Agregar Nuevo Grupo';
+      document.querySelector('#groupForm button[type=\"submit\"]').innerText = 'Agregar Grupo';
+      document.getElementById('cancelEdit').style.display = 'none';
+    }
+
+    document.getElementById('cancelEdit').onclick = resetForm;
+
+    document.getElementById('groupForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newGroup = {
+        name: document.getElementById('name').value,
+        address: document.getElementById('address').value,
+        phone: document.getElementById('phone').value,
+        start_date: document.getElementById('start_date').value,
+        hours: document.getElementById('hours').value
+      };
+      if (editIndex !== null) {
+        groups[editIndex] = newGroup;
+      } else {
+        groups.push(newGroup);
+      }
+      localStorage.setItem('aa_groups', JSON.stringify(groups));
+      renderGroups();
+      renderGroupList();
+      resetForm();
+    });
+
+    // Exportar grupos a un archivo JSON
+    document.getElementById('exportBtn').onclick = function() {
+      const dataStr = JSON.stringify(groups, null, 2);
+      const blob = new Blob([dataStr], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = "grupos_aa.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+
+    // Mostrar selector de archivos para importar
+    document.getElementById('importBtn').onclick = function() {
+      document.getElementById('importInput').click();
+    };
+
+    // Manejar importación de archivo
+    document.getElementById('importInput').onchange = function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedGroups = JSON.parse(e.target.result);
+          if (Array.isArray(importedGroups)) {
+            groups = importedGroups;
+            localStorage.setItem('aa_groups', JSON.stringify(groups));
+            renderGroups();
+            renderGroupList();
+            alert('¡Grupos importados exitosamente!');
+          } else {
+            alert('Formato de archivo inválido.');
+          }
+        } catch (err) {
+          alert('Error al leer el archivo.');
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    renderGroups();
+    renderGroupList();
+  </script>
+</body>
+</html>
