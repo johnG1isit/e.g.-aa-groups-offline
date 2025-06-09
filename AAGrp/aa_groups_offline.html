@@ -12,14 +12,14 @@
       font-family: sans-serif;
       padding: 0;
       margin: 0;
-      background: #f9f9f9;
+      background: #296fd8;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .container {
-      background: #fff;
+      background: #014e37;
       max-width: 400px;
       width: 100%;
       margin: 40px auto;
@@ -41,7 +41,7 @@
       display: block;
     }
     .group {
-      border-bottom: 1px solid #ccc;
+      border-bottom: 1px solid #140101;
       margin-bottom: 15px;
       padding-bottom: 10px;
     }
@@ -58,7 +58,7 @@
       border-radius: 5px;
       border: none;
       background: #1976d2;
-      color: #fff;
+      color: #d9e7eb;
       cursor: pointer;
       transition: background 0.2s;
     }
@@ -85,7 +85,7 @@
     .sync-btns span {
       display: block;
       margin-top: 6px;
-      color: #555;
+      color: #2d67d1;
       font-size: 0.9em;
     }
   </style>
@@ -107,12 +107,13 @@
       <span>(Comparte archivos por Bluetooth, AirDrop, correo, etc.)</span>
     </div>
 
-    <div id="formSection">
+    <div id="formSection" class="hidden">
       <h2 id="formTitle">Agregar Nuevo Grupo</h2>
       <form id="groupForm">
         <input type="text" id="name" placeholder="Nombre del Grupo" required><br>
         <input type="text" id="address" placeholder="Dirección" required><br>
         <input type="text" id="phone" placeholder="Teléfono" required><br>
+        <label for="start_date">Aniversario de Grupo</label><br>
         <input type="date" id="start_date" required><br>
         <input type="text" id="hours" placeholder="Horario de Atención" required><br>
         <button type="submit">Agregar Grupo</button>
