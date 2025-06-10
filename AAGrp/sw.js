@@ -2,7 +2,8 @@ const CACHE_NAME = 'aa-groups-offline-v1';
 const urlsToCache = [
   './aa_groups_offline.html',
   './manifest.json',
-  './AAlg.png'
+  './AAlg.png',
+  './sw.js'
 ];
 
 self.addEventListener('install', event => {
@@ -23,8 +24,15 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('./aa_groups_offline.html')
+        .then(response => response || fetch(event.request))
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => response || fetch(event.request))
+    );
+  }
 });
